@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: e92dace0308131acee1dc8367fc0499602724b62e38e1f13a52c9f4bdadbd7a9
+-- hash: 8213cce35e780ebafee09d2a10bab298a338b3d3d961d63fc1e1dbf887d5e626
 
 name:           gradix
 version:        0.1.0.0
@@ -38,6 +38,8 @@ library
       aeson >=1.5
     , base >=4.7 && <5
     , bytestring
+    , shelly
+    , text
   default-language: Haskell2010
 
 executable gradix-exe
@@ -52,6 +54,8 @@ executable gradix-exe
     , base >=4.7 && <5
     , bytestring
     , gradix
+    , shelly
+    , text
   default-language: Haskell2010
 
 test-suite gradix-test
@@ -67,4 +71,6 @@ test-suite gradix-test
     , base >=4.7 && <5
     , bytestring
     , gradix
+    , shelly
+    , text
   default-language: Haskell2010
