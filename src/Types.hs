@@ -1,4 +1,4 @@
-{-# LANGUAGE RankNTypes, OverloadedStrings, DeriveGeneric #-}
+{-# LANGUAGE RankNTypes, MultiParamTypeClasses, OverloadedStrings, DeriveGeneric #-}
 module Types where
 import Data.Aeson
 import GHC.Generics
@@ -33,26 +33,27 @@ instance ToJSON Attendance where
 	toEncoding = genericToEncoding defaultOptions
 instance FromJSON Attendance
 
-class ModelAPI a where
-	createStudent :: (Monad m) => Student   -> m a -> m ()
-	removeStudent :: (Monad m) => StudentId -> m a -> m ()
-	updateStudent :: (Monad m) => Student   -> m a -> m ()
-	findStudent   :: (Monad m) => StudentId -> m a -> m (IO( Maybe Student ))
+class ModelAPI a m where
+	createStudent :: (Monad m) => Student   -> a -> m ()
+	removeStudent :: (Monad m) => StudentId -> a -> m ()
+	updateStudent :: (Monad m) => Student   -> a -> m ()
+	findStudent   :: (Monad m) => StudentId -> a -> m (Maybe Student)
 
-	createAttendance :: (Monad m) => Attendance   -> m a -> m ()
-	removeAttendance :: (Monad m) => AttendanceId -> m a -> m ()
-        updateAttendance :: (Monad m) => Attendance   -> m a -> m ()
-        findAttendance   :: (Monad m) => AttendanceId -> m a -> m (IO( Maybe Attendance) )
+	createAttendance :: (Monad m) => Attendance   -> a -> m ()
+	removeAttendance :: (Monad m) => AttendanceId -> a -> m ()
+        updateAttendance :: (Monad m) => Attendance   -> a -> m ()
+        findAttendance   :: (Monad m) => AttendanceId -> a -> m (Maybe Attendance) 
 
-toggleAttendance ::(Monad m, ModelAPI conn) => m conn -> Attendance -> m ()
+
+toggleAttendance ::(Monad m, ModelAPI a m) => a -> Attendance -> m ()
 
 toggleAttendance conn attendance = do
 	maybeAttendance <- findAttendance (attendance_id attendance) conn  
-	--case maybeAttendance of
-	--	Nothing -> createAttendance attendance conn
-	--	Just att -> removeAttendance (attendance_id att) conn
+	case maybeAttendance of
+		Nothing -> createAttendance attendance conn
+		Just att -> removeAttendance (attendance_id att) conn
 	
-	return ()
+	
 
 
 

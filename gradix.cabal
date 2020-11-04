@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 8213cce35e780ebafee09d2a10bab298a338b3d3d961d63fc1e1dbf887d5e626
+-- hash: f0d6c325bad7643349aaac2b0eee9a34adbbe49efeb966c988ac75bfeda68148
 
 name:           gradix
 version:        0.1.0.0
@@ -29,17 +29,23 @@ library
   exposed-modules:
       JSON
       Lib
+      ServantModule
       Types
   other-modules:
       Paths_gradix
   hs-source-dirs:
       src
   build-depends:
-      aeson >=1.5
+      aeson >=1.4
     , base >=4.7 && <5
     , bytestring
+    , mtl
+    , proxy
+    , servant
+    , servant-server
     , shelly
     , text
+    , warp
   default-language: Haskell2010
 
 executable gradix-exe
@@ -50,12 +56,17 @@ executable gradix-exe
       app
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      aeson >=1.5
+      aeson >=1.4
     , base >=4.7 && <5
     , bytestring
     , gradix
+    , mtl
+    , proxy
+    , servant
+    , servant-server
     , shelly
     , text
+    , warp
   default-language: Haskell2010
 
 test-suite gradix-test
@@ -67,10 +78,15 @@ test-suite gradix-test
       test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      aeson >=1.5
+      aeson >=1.4
     , base >=4.7 && <5
     , bytestring
     , gradix
+    , mtl
+    , proxy
+    , servant
+    , servant-server
     , shelly
     , text
+    , warp
   default-language: Haskell2010

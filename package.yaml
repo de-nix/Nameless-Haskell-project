@@ -21,10 +21,15 @@ description:         Please see the README on GitHub at <https://github.com/gith
 
 dependencies:
 - base >= 4.7 && < 5
-- aeson >=  1.5
+- aeson >=  1.4
 - bytestring
 - text
 - shelly
+- servant-server
+- servant
+- mtl
+- proxy
+- warp
 library:
   source-dirs: src
 

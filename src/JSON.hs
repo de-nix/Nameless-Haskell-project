@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings, DeriveGeneric #-}
+{-# LANGUAGE OverloadedStrings, DeriveGeneric, MultiParamTypeClasses #-}
 {-# LANGUAGE ExtendedDefaultRules #-}
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
 
@@ -81,23 +81,23 @@ updateAttendanceFromContent attendance (Content studs attds) = Content studs (up
 getAttendanceFromContent :: AttendanceId -> Content -> Maybe Attendance
 getAttendanceFromContent attID (Content studs attds) = getFromAttendanceList attID attds 
 
-modifyDatabase function argument conn = do
-                                   (Connection x) <- conn
-                                   let maybeIOContent = decode<$>( L.fromStrict <$> (S.readFile x))
-                                       ioContent = (maybe (Content [] []) (function argument)) <$> maybeIOContent
-                                       ioEncoding = encode <$> ioContent
-				       ioStrict = L.toStrict <$> ioEncoding
-                                   pure $ S.writeFile x <$> ioStrict
+modifyDatabase function argument (Connection x) = do
+                                   
+                                   maybeContent <- decode<$>( L.fromStrict <$> (S.readFile x))
+                                   let ioContent = (maybe (Content [] []) (function argument)) maybeContent
+                                       ioEncoding = encode ioContent
+				       ioStrict = L.toStrict ioEncoding
+                                   S.writeFile x ioStrict
                                    return ()
 
 
-extractFromDatabase function argument conn = do
-                                   (Connection x) <- conn
-                                   let maybeIOContent = decode <$>(L.fromStrict <$> (S.readFile x))
-                                       ioMaybeData = (maybe Nothing (function argument)) <$> maybeIOContent
-                                   return ioMaybeData
+extractFromDatabase function argument (Connection x) = do
+                                 
+                                   maybeIOContent <- decode <$>(L.fromStrict <$> (S.readFile x))
+                                   return $ maybe Nothing (function argument) maybeIOContent
+                                   
 
-instance ModelAPI Connection where
+instance ModelAPI Connection IO where
 
 	createStudent student conn = modifyDatabase insertStudentInContent student conn
         removeStudent studentID conn = modifyDatabase removeStudentFromContent studentID conn
