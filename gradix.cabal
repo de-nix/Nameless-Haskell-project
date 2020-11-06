@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: f0d6c325bad7643349aaac2b0eee9a34adbbe49efeb966c988ac75bfeda68148
+-- hash: 1d5d9640c2c9d52de2c40dddbda4c0a0fc07b235cb69e87b511f02dc494ab128
 
 name:           gradix
 version:        0.1.0.0
@@ -41,6 +41,7 @@ library
     , bytestring
     , mtl
     , proxy
+    , resource-pool
     , servant
     , servant-server
     , shelly
@@ -62,6 +63,7 @@ executable gradix-exe
     , gradix
     , mtl
     , proxy
+    , resource-pool
     , servant
     , servant-server
     , shelly
@@ -84,6 +86,7 @@ test-suite gradix-test
     , gradix
     , mtl
     , proxy
+    , resource-pool
     , servant
     , servant-server
     , shelly

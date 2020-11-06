@@ -5,6 +5,13 @@
 
 packages:
 - completed:
+    hackage: pool-0.1.2.1@sha256:c79e139723764f4d4ba584c6cf6f73174700271910b15ed0f25a150a53a8c951,1006
+    pantry-tree:
+      size: 203
+      sha256: af6d29b0d93142a975fabf76bc51e8fec010c0201d241d15f9b9f9a94184249a
+  original:
+    hackage: pool-0.1.2.1@sha256:c79e139723764f4d4ba584c6cf6f73174700271910b15ed0f25a150a53a8c951,1006
+- completed:
     hackage: data-fix-0.3.0@sha256:058a266d1e658500e0ffb8babe68195b0ce06a081dcfc3814afc784b083fd9a5,1645
     pantry-tree:
       size: 261

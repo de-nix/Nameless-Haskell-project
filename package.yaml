@@ -30,6 +30,7 @@ dependencies:
 - mtl
 - proxy
 - warp
+- resource-pool
 library:
   source-dirs: src
 
