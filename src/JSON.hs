@@ -27,6 +27,7 @@ instance ModelAPI Connection IO where
     removeStudent studentID conn = modifyDatabase removeStudentImpl studentID conn
     updateStudent student conn = modifyDatabase updateStudentImpl student conn
     findStudent studentID conn = extractFromDatabase findStudentImpl studentID conn
+    getAllStudents conn = extractStudents conn
     createAttendance attendance conn = modifyDatabase insertAttendanceImpl attendance conn
     removeAttendance attendanceID conn= modifyDatabase removeAttendanceImpl attendanceID conn
     updateAttendance attendance conn = modifyDatabase updateAttendanceImpl attendance conn
@@ -63,6 +64,12 @@ modifyDatabase function argument (Connection x) = do
         ioStrict = L.toStrict ioEncoding
     S.writeFile x ioStrict
     return ()
+
+extractStudents :: Connection -> IO [Student]
+extractStudents (Connection x) = do
+  maybeIOContent <- decode <$> (L.fromStrict<$>(S.readFile x))
+  return $ maybe [] (\c@(Content students attendances) -> students ) maybeIOContent
+
 extractFromDatabase function argument (Connection x) = do
     maybeIOContent <- decode <$>(L.fromStrict <$> (S.readFile x))
     return $ maybe Nothing (function argument) maybeIOContent

@@ -35,6 +35,7 @@ class ModelAPI a m where
     removeStudent    :: (Monad m) => StudentId    -> a -> m ()
     updateStudent    :: (Monad m) => Student      -> a -> m ()
     findStudent      :: (Monad m) => StudentId    -> a -> m (Maybe Student)
+    getAllStudents   :: (Monad m) =>                 a -> m ([Student])
     createAttendance :: (Monad m) => Attendance   -> a -> m ()
     removeAttendance :: (Monad m) => AttendanceId -> a -> m ()
     updateAttendance :: (Monad m) => Attendance   -> a -> m ()
