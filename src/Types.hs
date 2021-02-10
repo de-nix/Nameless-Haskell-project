@@ -3,7 +3,8 @@
 module Types where
 import Data.Aeson
 import GHC.Generics
-
+import Data.Time
+import qualified Data.Map as Map
 type StudentName   = String
 type StudentId     = Integer
 type Group         = String
@@ -31,15 +32,19 @@ instance ToJSON Attendance where
 instance FromJSON Attendance
 
 class ModelAPI a m where
-    createStudent    :: (Monad m) => Student      -> a -> m ()
-    removeStudent    :: (Monad m) => StudentId    -> a -> m ()
-    updateStudent    :: (Monad m) => Student      -> a -> m ()
-    findStudent      :: (Monad m) => StudentId    -> a -> m (Maybe Student)
-    getAllStudents   :: (Monad m) =>                 a -> m ([Student])
-    createAttendance :: (Monad m) => Attendance   -> a -> m ()
-    removeAttendance :: (Monad m) => AttendanceId -> a -> m ()
-    updateAttendance :: (Monad m) => Attendance   -> a -> m ()
-    findAttendance   :: (Monad m) => AttendanceId -> a -> m (Maybe Attendance) 
+    createStudent    :: (Monad m) => Student                   -> a -> m ()
+    removeStudent    :: (Monad m) => StudentId                 -> a -> m ()
+    updateStudent    :: (Monad m) => Student                   -> a -> m ()
+    findStudent      :: (Monad m) => StudentId                 -> a -> m (Maybe Student)
+    getAllStudents   :: (Monad m) =>                              a -> m ([Student])
+    createAttendance :: (Monad m) => Attendance                -> a -> m ()
+    removeAttendance :: (Monad m) => AttendanceId              -> a -> m ()
+    updateAttendance :: (Monad m) => Attendance                -> a -> m ()
+    findAttendance   :: (Monad m) => AttendanceId              -> a -> m (Maybe Attendance)
+    getGroup         :: (Monad m) => UTCTime                   -> a -> m String
+    getSeminar       :: (Monad m) => UTCTime                   -> a -> m Int
+    setStartingTime  :: (Monad m) => UTCTime                   -> a -> m ()
+    setTimetable     :: (Monad m) => Map.Map (DayOfWeek, Int) String -> a -> m ()
 
 toggleAttendance ::(Monad m, ModelAPI a m) => a -> Attendance -> m ()
 toggleAttendance conn attendance = do

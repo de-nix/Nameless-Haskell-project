@@ -24,7 +24,9 @@ dependencies:
 - aeson >=  1.4
 - bytestring
 - text
+- time
 - shelly
+- containers
 - servant-server
 - servant
 - mtl

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: cc15d7b79231fedc263160db44431c30a4da7a5540e63a446d06bbc14198cf0f
+-- hash: ea5b12cb4cd05e02f99ec8957912325ae3ec8b4bf00bb784a47eb725f6232821
 
 name:           gradix
 version:        0.1.0.0
@@ -39,6 +39,7 @@ library
       aeson >=1.4
     , base >=4.7 && <5
     , bytestring
+    , containers
     , mtl
     , proxy
     , resource-pool
@@ -46,6 +47,7 @@ library
     , servant-server
     , shelly
     , text
+    , time
     , wai-cors
     , warp
   default-language: Haskell2010
@@ -61,6 +63,7 @@ executable gradix-exe
       aeson >=1.4
     , base >=4.7 && <5
     , bytestring
+    , containers
     , gradix
     , mtl
     , proxy
@@ -69,6 +72,7 @@ executable gradix-exe
     , servant-server
     , shelly
     , text
+    , time
     , wai-cors
     , warp
   default-language: Haskell2010
@@ -85,6 +89,7 @@ test-suite gradix-test
       aeson >=1.4
     , base >=4.7 && <5
     , bytestring
+    , containers
     , gradix
     , mtl
     , proxy
@@ -93,6 +98,7 @@ test-suite gradix-test
     , servant-server
     , shelly
     , text
+    , time
     , wai-cors
     , warp
   default-language: Haskell2010

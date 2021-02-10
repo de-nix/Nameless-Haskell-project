@@ -29,7 +29,7 @@ resolver: lts-16.18
 #   - auto-update
 #   - wai
 packages:
-- .
+
 # Dependency packages to be pulled from upstream that are not in the resolver.
 # These entries can reference officially published versions as well as
 # forks / in-progress versions pinned to a git hash. For example:
@@ -43,30 +43,5 @@ packages:
 
 # Override default flag values for local packages and extra-deps
 # flags: {}
-extra-deps : 
-        
-        - pool-0.1.2.1@sha256:c79e139723764f4d4ba584c6cf6f73174700271910b15ed0f25a150a53a8c951,1006
-        - data-fix-0.3.0@sha256:058a266d1e658500e0ffb8babe68195b0ce06a081dcfc3814afc784b083fd9a5,1645
-        - strict-0.4@sha256:1b50c7c9c636c3a1bbc7f8873b9be48f6ca0faca4df6eec6a014de6208fb1c0e,4200
+extra-deps :
         - proxy-0.1.0.0@sha256:e50776346892a712d49fb8f9c3433a15d6c2ea362cb73040dbed420e21c3606f,825
-        - aeson-1.4.7.1@sha256:6d8d2fd959b7122a1df9389cf4eca30420a053d67289f92cdc0dbc0dab3530ba,7098
-          # Extra package databases containing global packages
-# extra-package-dbs: []
-
-# Control whether we use the GHC we find on the path
-# system-ghc: true
-#
-# Require a specific version of stack, using version ranges
-# require-stack-version: -any # Default
-# require-stack-version: ">=2.3"
-#
-# Override the architecture used by stack, especially useful on Windows
-# arch: i386
-# arch: x86_64
-#
-# Extra directories used by stack for building
-# extra-include-dirs: [/path/to/dir]
-# extra-lib-dirs: [/path/to/dir]
-#
-# Allow a newer minor version of GHC than the snapshot specifies
-# compiler-check: newer-minor
