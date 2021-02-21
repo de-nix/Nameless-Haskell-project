@@ -20,18 +20,13 @@ instance Ord DayOfWeek where
 
 data Content = Content {
     students :: [Student],
-    attendances :: [Attendance],
-    startingTime :: UTCTime,
-    timetable :: Map.Map (DayOfWeek, Int) String 
+    attendances :: [Attendance] 
     } deriving (Generic,Show)
+
 setStudents :: [Student] -> Content -> Content
-setStudents std (Content _ att st tt) = Content std att st tt
+setStudents std Content{attendances = att} = Content std att
 setAttendances :: [Attendance] -> Content -> Content
-setAttendances att (Content std _ st tt) = Content std att st tt
-setStartingTimeImpl :: UTCTime -> Content -> Content
-setStartingTimeImpl st (Content std att _ tt) = Content std att st tt
-setTimetableImpl :: Map.Map (DayOfWeek,Int) String -> Content -> Content
-setTimetableImpl tt (Content std att st _) = Content std att st tt
+setAttendances att Content{students= std} = Content std att
 
 data Connection = Connection {
     fileLocation :: String
@@ -49,10 +44,7 @@ instance ModelAPI Connection IO where
     removeAttendance attendanceID conn= modifyDatabase removeAttendanceImpl attendanceID conn
     updateAttendance attendance conn = modifyDatabase updateAttendanceImpl attendance conn
     findAttendance attendanceID conn =  extractFromDatabase findAttendanceImpl attendanceID conn
-    getSeminar time conn = getSeminarImpl time conn
-    getGroup time conn = getGroupImpl time conn
-    setStartingTime time conn = modifyDatabase setStartingTimeImpl time conn
-    setTimetable timetable conn = modifyDatabase setTimetableImpl timetable conn
+    getAllAttendances conn = extractAttendances conn
 
 replaceStudent :: Student -> Student -> Student
 replaceStudent st1@Student{Types.id = id1} st2@Student{Types.id = id2}
@@ -79,29 +71,11 @@ updateAttendanceImpl attendance content@Content{attendances = att} = setAttendan
 findAttendanceImpl :: AttendanceId   -> Content -> Maybe Attendance
 findAttendanceImpl attID Content{attendances = att} = find (\x -> (Types.attendance_id x) == attID ) att
 
-
-
-
-getSeminarImpl ::UTCTime -> Connection -> IO Int
-getSeminarImpl time (Connection x) = do
-    maybeIOContent <- decode <$> (L.fromStrict<$>(S.readFile x))  
-    date <- getCurrentTime 
-    return $ ( div (floor(diffUTCTime  (maybe date  (\Content{ startingTime = sDate} -> sDate) maybeIOContent) time) ) (60*60*24*7)) + 1
-    
-getGroupImpl ::UTCTime -> Connection -> IO String
-getGroupImpl time (Connection x) = do
-    maybeIOContent <- decode <$> (L.fromStrict<$>(S.readFile x))
-    --date <- getCurrentTime
-    let timetable = maybe Map.empty (\Content{timetable = tt} -> tt) maybeIOContent
-        weekDay = dayOfWeek (utctDay time)
-        month = div (floor (utctDayTime time)) 3600
-    return $ Map.findWithDefault "" (weekDay,month) timetable
- 
 modifyDatabase function argument (Connection x) = do
 
     maybeContent <- decode<$>( L.fromStrict <$> (S.readFile x))
     timeUTC <- getCurrentTime
-    let ioContent = (maybe (Content [] [] timeUTC (Map.empty)) (function argument)) maybeContent
+    let ioContent = (maybe (Content [] [] ) (function argument)) maybeContent
         ioEncoding = encode ioContent
         ioStrict = L.toStrict ioEncoding
     S.writeFile x ioStrict
@@ -111,6 +85,11 @@ extractStudents :: Connection -> IO [Student]
 extractStudents (Connection x) = do
     maybeIOContent <- decode <$> (L.fromStrict<$>(S.readFile x))
     return $ maybe [] (\c@Content{ students = std} -> std ) maybeIOContent
+
+extractAttendances :: Connection -> IO [Attendance]
+extractAttendances (Connection x) = do
+    maybeIOContent <- decode <$> (L.fromStrict<$>(S.readFile x))
+    return $ maybe [] (\c@Content{ attendances = att} -> att ) maybeIOContent
 
 extractFromDatabase function argument (Connection x) = do
     maybeIOContent <- decode <$>(L.fromStrict <$> (S.readFile x))

@@ -41,10 +41,7 @@ class ModelAPI a m where
     removeAttendance :: (Monad m) => AttendanceId              -> a -> m ()
     updateAttendance :: (Monad m) => Attendance                -> a -> m ()
     findAttendance   :: (Monad m) => AttendanceId              -> a -> m (Maybe Attendance)
-    getGroup         :: (Monad m) => UTCTime                   -> a -> m String
-    getSeminar       :: (Monad m) => UTCTime                   -> a -> m Int
-    setStartingTime  :: (Monad m) => UTCTime                   -> a -> m ()
-    setTimetable     :: (Monad m) => Map.Map (DayOfWeek, Int) String -> a -> m ()
+    getAllAttendances:: (Monad m) =>                              a -> m ([Attendance])
 
 toggleAttendance ::(Monad m, ModelAPI a m) => a -> Attendance -> m ()
 toggleAttendance conn attendance = do
