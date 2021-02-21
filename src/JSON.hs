@@ -4,6 +4,7 @@
 {-# LANGUAGE NamedFieldPuns        #-}
 {-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE TemplateHaskell       #-}
+{-# LANGUAGE InstanceSigs       #-}
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
 
 module JSON where
@@ -19,6 +20,7 @@ import qualified Data.ByteString.Lazy   as L
 import           Data.List
 import qualified Data.Map               as Map
 import           Data.Time
+import Data.Functor ((<&>))
 import           Data.Tuple
 import           GHC.Generics
 import           System.IO
@@ -51,14 +53,16 @@ instance ToJSON Content where
 instance FromJSON Content
 
 instance ModelAPI Connection IO where
-    createStudent student conn = modifyDatabase createStudentImpl student conn
-    removeStudent studentID conn = modifyDatabase removeStudentImpl studentID conn
-    updateStudent student conn = modifyDatabase updateStudentImpl student conn
+    createStudent :: Student -> Connection -> IO ()
+    createStudent student = update' (cStudents %~ (student :))
+
+    removeStudent studentID conn = update removeStudentImpl studentID conn
+    updateStudent student conn = update updateStudentImpl student conn
     findStudent studentID conn = extractFromDatabase findStudentImpl studentID conn
     getAllStudents conn = extractStudents conn
-    createAttendance attendance conn = modifyDatabase insertAttendanceImpl attendance conn
-    removeAttendance attendanceID conn= modifyDatabase removeAttendanceImpl attendanceID conn
-    updateAttendance attendance conn = modifyDatabase updateAttendanceImpl attendance conn
+    createAttendance attendance conn = update insertAttendanceImpl attendance conn
+    removeAttendance attendanceID conn= update removeAttendanceImpl attendanceID conn
+    updateAttendance attendance conn = update updateAttendanceImpl attendance conn
     findAttendance attendanceID conn =  extractFromDatabase findAttendanceImpl attendanceID conn
     getAllAttendances conn = extractAttendances conn
 
@@ -87,9 +91,20 @@ updateAttendanceImpl attendance content@Content{_cAttendances = att} = setAttend
 findAttendanceImpl :: AttendanceId   -> Content -> Maybe Attendance
 findAttendanceImpl attID Content{_cAttendances = att} = find (\x -> (Types._aId x) == attID ) att
 
-modifyDatabase function argument (Connection x) = do
+update' :: (Content -> Content) -> Connection -> IO ()
+update' updateF connection = do
+    let storeLocation = connection ^. cLocation
+    newStore <- S.readFile storeLocation
+            <&> L.fromStrict
+            <&> decode
+            <&> maybe (Content [] [] ) updateF
+            <&> encode
+            <&> L.toStrict
+    S.writeFile storeLocation newStore
 
-    maybeContent <- decode<$>( L.fromStrict <$> (S.readFile x))
+update :: (a -> Content -> Content) -> a -> Connection -> IO ()
+update function argument (Connection x) = do
+    maybeContent <- decode <$>( L.fromStrict <$> (S.readFile x))
     timeUTC <- getCurrentTime
     let ioContent = (maybe (Content [] [] ) (function argument)) maybeContent
         ioEncoding = encode ioContent
