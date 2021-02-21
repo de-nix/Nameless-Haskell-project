@@ -51,7 +51,7 @@ sortedStudents conn seminar group = do
   allStudents <- getAllStudents conn
   allAttendances <- getAllAttendances conn
   let filteredAttendances = filter (\Attendance{Types.group = gr, seminar = sem} ->gr == group && seminar >= sem) allAttendances
-      studentList = foldl (\lst student@Student{Types.id = sid, Types.student_group = gr} ->  (student, (bonus gr group) + (getValue seminar (filter (\Attendance{studentId = asid} -> asid == sid) filteredAttendances))):lst) [] allStudents
+      studentList = foldl (\lst student@Student{Types.id = sid, Types.studentGroup = gr} ->  (student, (bonus gr group) + (getValue seminar (filter (\Attendance{studentId = asid} -> asid == sid) filteredAttendances))):lst) [] allStudents
         where 
           bonus ::String -> String -> Integer
           bonus a b = case a == b of
@@ -81,11 +81,11 @@ switchAttendance conn Attendance{Types.group=gr,seminar=sem,studentId = sid, act
   let maybeAtt = find (\Attendance{Types.group=gr2,seminar=sem2,studentId = sid2} -> gr2==gr && sem2==sem && sid ==sid2) allAttendances
   case maybeAtt of
     Nothing -> createAttendance (Attendance (getMaxId allAttendances) sid sem gr act) conn
-    Just Attendance{attendance_id = aid} -> removeAttendance aid conn
+    Just Attendance{attendanceId = aid} -> removeAttendance aid conn
   return ()
   where
     getMaxId :: [Attendance] -> Integer
-    getMaxId atts = 1 + foldl (\mid Attendance{attendance_id = aid} -> case aid>mid of 
+    getMaxId atts = 1 + foldl (\mid Attendance{attendanceId = aid} -> case aid>mid of 
                                                                       True -> aid
                                                                       _    -> mid) 0 atts
     
@@ -95,11 +95,11 @@ switchActivity conn Attendance{Types.group=gr,seminar=sem,studentId = sid, activ
   let maybeAtt = find (\Attendance{Types.group=gr2,seminar=sem2,studentId = sid2} -> gr2==gr && sem2==sem && sid ==sid2) allAttendances
   case maybeAtt of
       Nothing -> createAttendance (Attendance (getMaxId allAttendances) sid sem gr act) conn
-      Just Attendance{attendance_id = aid} -> updateAttendance (Attendance aid sid sem gr act) conn
+      Just Attendance{attendanceId = aid} -> updateAttendance (Attendance aid sid sem gr act) conn
   return ()
   where
     getMaxId :: [Attendance] -> Integer
-    getMaxId atts = 1 + foldl (\mid Attendance{attendance_id = aid} -> case aid>mid of
+    getMaxId atts = 1 + foldl (\mid Attendance{attendanceId = aid} -> case aid>mid of
                                                                            True -> aid
                                                                            _    -> mid) 0 atts
 
