@@ -51,7 +51,7 @@ replaceStudent st1@Student{Types.id = id1} st2@Student{Types.id = id2}
     | id1 == id2 = st2
     | otherwise = st1
 replaceAttendance :: Attendance -> Attendance -> Attendance
-replaceAttendance att1@Attendance{attendance_id = id1} att2@Attendance {attendance_id = id2}
+replaceAttendance att1@Attendance{attendanceId = id1} att2@Attendance {attendanceId = id2}
     | id1 == id2 = att2
     | otherwise = att1
 createStudentImpl    :: Student      -> Content -> Content
@@ -65,11 +65,11 @@ findStudentImpl studID Content{students = std}    = find (\x -> (Types.id x) == 
 insertAttendanceImpl :: Attendance   -> Content -> Content
 insertAttendanceImpl attendance content@Content{attendances = att} = setAttendances (attendance : att) content
 removeAttendanceImpl :: AttendanceId -> Content -> Content
-removeAttendanceImpl attID content@Content{attendances = att} = setAttendances (filter (\x -> (Types.attendance_id x) /= attID ) att) content
+removeAttendanceImpl attID content@Content{attendances = att} = setAttendances (filter (\x -> (Types.attendanceId x) /= attID ) att) content
 updateAttendanceImpl :: Attendance   -> Content -> Content
 updateAttendanceImpl attendance content@Content{attendances = att} = setAttendances ( map (\x -> replaceAttendance x attendance) att ) content
 findAttendanceImpl :: AttendanceId   -> Content -> Maybe Attendance
-findAttendanceImpl attID Content{attendances = att} = find (\x -> (Types.attendance_id x) == attID ) att
+findAttendanceImpl attID Content{attendances = att} = find (\x -> (Types.attendanceId x) == attID ) att
 
 modifyDatabase function argument (Connection x) = do
 
