@@ -1,39 +1,55 @@
-{-# LANGUAGE OverloadedStrings, DeriveGeneric, MultiParamTypeClasses #-}
-{-# LANGUAGE ExtendedDefaultRules, NamedFieldPuns #-}
+{-# LANGUAGE DeriveGeneric         #-}
+{-# LANGUAGE ExtendedDefaultRules  #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE NamedFieldPuns        #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE TemplateHaskell       #-}
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
 
 module JSON where
-import qualified Data.ByteString as S
-import qualified Data.ByteString.Lazy as L 
-import Types
-import Data.Time
-import System.IO
-import Data.Aeson
-import GHC.Generics
-import Control.Monad
-import Data.List
-import qualified Data.Map as Map
-import Data.Tuple
+
+import Control.Lens (set)
+import           Control.Lens.Operators
+import           Control.Lens.TH
+import           Control.Monad
+
+import           Data.Aeson
+import qualified Data.ByteString        as S
+import qualified Data.ByteString.Lazy   as L
+import           Data.List
+import qualified Data.Map               as Map
+import           Data.Time
+import           Data.Tuple
+import           GHC.Generics
+import           System.IO
+import           Types
+
+-- TODO: Make student equality work using only the ID (implement eq instance).
 
 instance Ord DayOfWeek where
-  compare day1 day2 = compare (fromEnum day1) (fromEnum day2)
+  compare l r = compare (fromEnum l) (fromEnum r)
 
-data Content = Content {
-    students :: [Student],
-    attendances :: [Attendance] 
+data Content = Content
+    { _cStudents    :: [Student]
+    , _cAttendances :: [Attendance]
     } deriving (Generic,Show)
+$(makeLenses ''Content)
 
 setStudents :: [Student] -> Content -> Content
-setStudents std Content{attendances = att} = Content std att
-setAttendances :: [Attendance] -> Content -> Content
-setAttendances att Content{students= std} = Content std att
+setStudents = set cStudents
 
-data Connection = Connection {
-    fileLocation :: String
+setAttendances :: [Attendance] -> Content -> Content
+setAttendances = set cAttendances
+
+data Connection = Connection
+    { _cLocation :: String
     } deriving (Show)
+$(makeLenses ''Connection)
+
 instance ToJSON Content where
     toEncoding = genericToEncoding defaultOptions
 instance FromJSON Content
+
 instance ModelAPI Connection IO where
     createStudent student conn = modifyDatabase createStudentImpl student conn
     removeStudent studentID conn = modifyDatabase removeStudentImpl studentID conn
@@ -47,29 +63,29 @@ instance ModelAPI Connection IO where
     getAllAttendances conn = extractAttendances conn
 
 replaceStudent :: Student -> Student -> Student
-replaceStudent st1@Student{Types.id = id1} st2@Student{Types.id = id2}
+replaceStudent st1@Student{Types._sId = id1} st2@Student{Types._sId = id2}
     | id1 == id2 = st2
     | otherwise = st1
 replaceAttendance :: Attendance -> Attendance -> Attendance
-replaceAttendance att1@Attendance{attendanceId = id1} att2@Attendance {attendanceId = id2}
+replaceAttendance att1@Attendance{_aId = id1} att2@Attendance {_aId = id2}
     | id1 == id2 = att2
     | otherwise = att1
 createStudentImpl    :: Student      -> Content -> Content
-createStudentImpl student content@Content{students = std} = setStudents (student:std) content
+createStudentImpl student content@Content{_cStudents = std} = setStudents (student:std) content
 removeStudentImpl    :: StudentId    -> Content -> Content
-removeStudentImpl studID content@Content{students = std} = setStudents (filter (\x -> (Types.id x) /= studID ) std) content
+removeStudentImpl studID content@Content{_cStudents = std} = setStudents (filter (\x -> (Types._sId x) /= studID ) std) content
 updateStudentImpl    :: Student      -> Content -> Content
-updateStudentImpl student content@Content{students = std} = setStudents (map (\x -> replaceStudent x student ) std) content
+updateStudentImpl student content@Content{_cStudents = std} = setStudents (map (\x -> replaceStudent x student ) std) content
 findStudentImpl      :: StudentId    -> Content -> Maybe Student
-findStudentImpl studID Content{students = std}    = find (\x -> (Types.id x) == studID ) std
+findStudentImpl studID Content{_cStudents = std}    = find (\x -> (Types._sId x) == studID ) std
 insertAttendanceImpl :: Attendance   -> Content -> Content
-insertAttendanceImpl attendance content@Content{attendances = att} = setAttendances (attendance : att) content
+insertAttendanceImpl attendance content@Content{_cAttendances = att} = setAttendances (attendance : att) content
 removeAttendanceImpl :: AttendanceId -> Content -> Content
-removeAttendanceImpl attID content@Content{attendances = att} = setAttendances (filter (\x -> (Types.attendanceId x) /= attID ) att) content
+removeAttendanceImpl attID content@Content{_cAttendances = att} = setAttendances (filter (\x -> (Types._aId x) /= attID ) att) content
 updateAttendanceImpl :: Attendance   -> Content -> Content
-updateAttendanceImpl attendance content@Content{attendances = att} = setAttendances ( map (\x -> replaceAttendance x attendance) att ) content
+updateAttendanceImpl attendance content@Content{_cAttendances = att} = setAttendances ( map (\x -> replaceAttendance x attendance) att ) content
 findAttendanceImpl :: AttendanceId   -> Content -> Maybe Attendance
-findAttendanceImpl attID Content{attendances = att} = find (\x -> (Types.attendanceId x) == attID ) att
+findAttendanceImpl attID Content{_cAttendances = att} = find (\x -> (Types._aId x) == attID ) att
 
 modifyDatabase function argument (Connection x) = do
 
@@ -84,12 +100,12 @@ modifyDatabase function argument (Connection x) = do
 extractStudents :: Connection -> IO [Student]
 extractStudents (Connection x) = do
     maybeIOContent <- decode <$> (L.fromStrict<$>(S.readFile x))
-    return $ maybe [] (\c@Content{ students = std} -> std ) maybeIOContent
+    return $ maybe [] (\c@Content{ _cStudents = std} -> std ) maybeIOContent
 
 extractAttendances :: Connection -> IO [Attendance]
 extractAttendances (Connection x) = do
     maybeIOContent <- decode <$> (L.fromStrict<$>(S.readFile x))
-    return $ maybe [] (\c@Content{ attendances = att} -> att ) maybeIOContent
+    return $ maybe [] (\c@Content{ _cAttendances = att} -> att ) maybeIOContent
 
 extractFromDatabase function argument (Connection x) = do
     maybeIOContent <- decode <$>(L.fromStrict <$> (S.readFile x))

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ea5b12cb4cd05e02f99ec8957912325ae3ec8b4bf00bb784a47eb725f6232821
+-- hash: 694cb1bd55c5c189e731d3868376e9a9f2938e308fb3d8b5d5ba6801cc6131e8
 
 name:           gradix
 version:        0.1.0.0
@@ -40,6 +40,7 @@ library
     , base >=4.7 && <5
     , bytestring
     , containers
+    , lens
     , mtl
     , proxy
     , resource-pool
@@ -65,6 +66,7 @@ executable gradix-exe
     , bytestring
     , containers
     , gradix
+    , lens
     , mtl
     , proxy
     , resource-pool
@@ -91,6 +93,7 @@ test-suite gradix-test
     , bytestring
     , containers
     , gradix
+    , lens
     , mtl
     , proxy
     , resource-pool

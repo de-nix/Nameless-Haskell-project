@@ -1,32 +1,35 @@
-{-# LANGUAGE DataKinds, OverloadedStrings #-}
-{-# LANGUAGE TypeOperators, FlexibleContexts #-}
+{-# LANGUAGE DataKinds         #-}
+{-# LANGUAGE FlexibleContexts  #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeOperators     #-}
 
-module ServantModule where 
-import Servant.API
-import Servant.Server
-import Data.Time
-import Types
-import Data.Function (on)
-import Data.List
-import Data.Maybe
-import Control.Monad.Trans
-import Network.Wai.Middleware.Cors
-import JSON
-import Data.Proxy
-import Network.Wai.Handler.Warp
-import Data.Pool (Pool, withResource)
-import qualified Data.Map as Map
+module ServantModule where
+
+import           Control.Monad.Trans
+import           Data.Function               (on)
+import           Data.List
+import qualified Data.Map                    as Map
+import           Data.Maybe
+import           Data.Pool                   (Pool, withResource)
+import           Data.Proxy
+import           Data.Time
+import           JSON
+import           Network.Wai.Handler.Warp
+import           Network.Wai.Middleware.Cors
+import           Servant.API
+import           Servant.Server
+import           Types
 
 app' :: Connection -> Application
-app' conn = cors (const $ Just policy) $ serve api $ hoistServer api turnToHandler $ 
-  getStudent                  conn :<|> flip createStudent    conn 
+app' conn = cors (const $ Just policy) $ serve api $ hoistServer api turnToHandler $
+  getStudent                  conn :<|> flip createStudent    conn
   :<|> updateStudentMethod    conn :<|> flip removeStudent    conn
-  :<|> sortedStudents         conn :<|>      filterStudents   conn 
+  :<|> sortedStudents         conn :<|>      filterStudents   conn
   :<|> getAttendance          conn :<|>      switchAttendance conn
-  :<|> updateAttendanceMethod conn :<|> flip removeAttendance conn 
+  :<|> updateAttendanceMethod conn :<|> flip removeAttendance conn
   :<|> getAttendances         conn :<|>      switchActivity   conn
-      where 
-        policy = simpleCorsResourcePolicy  
+      where
+        policy = simpleCorsResourcePolicy
           { corsRequestHeaders = ["Content-Type"]
           , corsMethods ="GET":("PUT":( "POST" : simpleMethods)) }
 
@@ -42,23 +45,23 @@ updateStudentMethod conn sID body = updateStudent body conn
 updateAttendanceMethod conn sID body = updateAttendance body conn
 
 filterStudents :: (ModelAPI a m, Monad m) => a -> String ->m [Student]
-filterStudents conn nameString = do 
+filterStudents conn nameString = do
   allStuds <- getAllStudents conn
-  return $ filter (\stud -> isInfixOf nameString (name stud)) allStuds
+  return $ filter (\stud -> isInfixOf nameString (_sName stud)) allStuds
 
 sortedStudents :: (ModelAPI a m, Monad m) => a -> Integer -> String  -> m[Student]
 sortedStudents conn seminar group = do
   allStudents <- getAllStudents conn
   allAttendances <- getAllAttendances conn
-  let filteredAttendances = filter (\Attendance{Types.group = gr, seminar = sem} ->gr == group && seminar >= sem) allAttendances
-      studentList = foldl (\lst student@Student{Types.id = sid, Types.studentGroup = gr} ->  (student, (bonus gr group) + (getValue seminar (filter (\Attendance{studentId = asid} -> asid == sid) filteredAttendances))):lst) [] allStudents
-        where 
+  let filteredAttendances = filter (\Attendance{Types._aGroup = gr, _aSeminar = sem} ->gr == group && seminar >= sem) allAttendances
+      studentList = foldl (\lst student@Student{Types._sId = sid, Types._sGroup = gr} ->  (student, (bonus gr group) + (getValue seminar (filter (\Attendance{_aStudentId = asid} -> asid == sid) filteredAttendances))):lst) [] allStudents
+        where
           bonus ::String -> String -> Integer
           bonus a b = case a == b of
             True -> 100
             _    -> 0
           getValue :: Integer-> [Attendance] -> Integer
-          getValue seminar attendances = foldl (\nr Attendance{seminar = sem} -> case seminar - sem of
+          getValue seminar attendances = foldl (\nr Attendance{_aSeminar = sem} -> case seminar - sem of
             0 -> nr + 500
             1 -> nr + 100
             2 -> nr + 50
@@ -72,39 +75,39 @@ sortedStudents conn seminar group = do
 getAttendances ::(ModelAPI a m, Monad m) => a -> Integer -> String -> m [Attendance]
 getAttendances conn seminar group = do
   allAttendances <- getAllAttendances conn
-  return $ filter (\Attendance{seminar = sem, Types.group = gr} -> (sem == seminar) && (gr == group)) allAttendances
+  return $ filter (\Attendance{_aSeminar = sem, Types._aGroup = gr} -> (sem == seminar) && (gr == group)) allAttendances
 
 
 switchAttendance :: (ModelAPI a m, Monad m) => a -> Attendance -> m()
-switchAttendance conn Attendance{Types.group=gr,seminar=sem,studentId = sid, activity = act} = do
+switchAttendance conn Attendance{Types._aGroup=gr,_aSeminar=sem,_aStudentId = sid, _aActivity = act} = do
   allAttendances <- getAllAttendances conn
-  let maybeAtt = find (\Attendance{Types.group=gr2,seminar=sem2,studentId = sid2} -> gr2==gr && sem2==sem && sid ==sid2) allAttendances
+  let maybeAtt = find (\Attendance{Types._aGroup=gr2,_aSeminar=sem2,_aStudentId = sid2} -> gr2==gr && sem2==sem && sid ==sid2) allAttendances
   case maybeAtt of
     Nothing -> createAttendance (Attendance (getMaxId allAttendances) sid sem gr act) conn
-    Just Attendance{attendanceId = aid} -> removeAttendance aid conn
+    Just Attendance{_aId = aid} -> removeAttendance aid conn
   return ()
   where
     getMaxId :: [Attendance] -> Integer
-    getMaxId atts = 1 + foldl (\mid Attendance{attendanceId = aid} -> case aid>mid of 
+    getMaxId atts = 1 + foldl (\mid Attendance{_aId = aid} -> case aid>mid of
                                                                       True -> aid
                                                                       _    -> mid) 0 atts
-    
+
 switchActivity   :: (ModelAPI a m, Monad m) => a -> Attendance -> m()
-switchActivity conn Attendance{Types.group=gr,seminar=sem,studentId = sid, activity = act} =do 
+switchActivity conn Attendance{Types._aGroup=gr,_aSeminar=sem,_aStudentId = sid, _aActivity = act} =do
   allAttendances <- getAllAttendances conn
-  let maybeAtt = find (\Attendance{Types.group=gr2,seminar=sem2,studentId = sid2} -> gr2==gr && sem2==sem && sid ==sid2) allAttendances
+  let maybeAtt = find (\Attendance{Types._aGroup=gr2,_aSeminar=sem2,_aStudentId = sid2} -> gr2==gr && sem2==sem && sid ==sid2) allAttendances
   case maybeAtt of
       Nothing -> createAttendance (Attendance (getMaxId allAttendances) sid sem gr act) conn
-      Just Attendance{attendanceId = aid} -> updateAttendance (Attendance aid sid sem gr act) conn
+      Just Attendance{_aId = aid} -> updateAttendance (Attendance aid sid sem gr act) conn
   return ()
   where
     getMaxId :: [Attendance] -> Integer
-    getMaxId atts = 1 + foldl (\mid Attendance{attendanceId = aid} -> case aid>mid of
+    getMaxId atts = 1 + foldl (\mid Attendance{_aId = aid} -> case aid>mid of
                                                                            True -> aid
                                                                            _    -> mid) 0 atts
 
 type API = "student"         :> Capture "id" Integer :> Get '[JSON] Student
-    :<|> "student"           :> ReqBody '[JSON] Student :> Post '[JSON] () 
+    :<|> "student"           :> ReqBody '[JSON] Student :> Post '[JSON] ()
     :<|> "student"           :> Capture "id" Integer :> ReqBody '[JSON] Student :> Put '[JSON] ()
     :<|> "student"           :> Capture "id" Integer :> Delete '[JSON] ()
     :<|> "students" :>"sort" :> Capture "seminar" Integer :> Capture "group" String :> Get '[JSON] [Student]

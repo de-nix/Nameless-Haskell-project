@@ -2,10 +2,15 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE RankNTypes            #-}
+{-# LANGUAGE TemplateHaskell       #-}
 
 module Types where
+
+import qualified Control.Lens
+import           Control.Lens.Operators
+import           Control.Lens.TH
 import           Data.Aeson
-import qualified Data.Map     as Map
+import qualified Data.Map               as Map
 import           Data.Time
 import           GHC.Generics
 
@@ -16,20 +21,22 @@ type Code          = String
 type AttendanceId  = Integer
 type SeminarNumber = Integer
 
-data Student       = Student{
-    id            :: StudentId,
-    name          :: String,
-    studentGroup :: Group,
-    code          :: Code
+data Student = Student
+    { _sId    :: StudentId
+    , _sName  :: String
+    , _sGroup :: Group
+    , _sCode  :: Code
     } deriving (Generic,Eq, Show)
+$(makeLenses ''Student)
 
-data Attendance = Attendance {
-    attendanceId :: AttendanceId,
-    studentId     :: StudentId,
-    seminar       :: SeminarNumber,
-    group         :: Group,
-    activity      :: Bool
+data Attendance = Attendance 
+    { _aId        :: AttendanceId
+    , _aStudentId :: StudentId
+    , _aSeminar   :: SeminarNumber
+    , _aGroup     :: Group
+    , _aActivity  :: Bool
     } deriving (Generic, Eq, Show)
+$(makeLenses ''Attendance)
 
 instance ToJSON Student where
     toEncoding = genericToEncoding defaultOptions
@@ -52,10 +59,3 @@ class ModelAPI a m where
     updateAttendance :: (Monad m) => Attendance   -> a -> m ()
     findAttendance   :: (Monad m) => AttendanceId -> a -> m (Maybe Attendance)
     getAllAttendances:: (Monad m) =>                 a -> m ([Attendance])
-
-toggleAttendance ::(Monad m, ModelAPI a m) => a -> Attendance -> m ()
-toggleAttendance conn attendance = do
-    maybeAttendance <- findAttendance (attendanceId attendance) conn
-    case maybeAttendance of
-        Nothing  -> createAttendance attendance conn
-        Just att -> removeAttendance (attendanceId att) conn
