@@ -26,7 +26,12 @@ data Student = Student
     , _sName  :: String
     , _sGroup :: Group
     , _sCode  :: Code
-    } deriving (Generic,Eq, Show)
+    } deriving (Generic, Show)
+
+instance Eq Student where
+  student1 == student2 = (_sId student1 == _sId student2) 
+                         || (_sCode student1 == _sCode student2)
+
 $(makeLenses ''Student)
 
 data Attendance = Attendance 
@@ -35,7 +40,14 @@ data Attendance = Attendance
     , _aSeminar   :: SeminarNumber
     , _aGroup     :: Group
     , _aActivity  :: Bool
-    } deriving (Generic, Eq, Show)
+    } deriving (Generic, Show)
+
+instance Eq Attendance where
+  attendance1 == attendance2 =  (_aId attendance1 == _aId attendance2) || 
+                                ((_aSeminar attendance1 == _aSeminar attendance2 ) 
+                                && (_aStudentId attendance1 == _aStudentId attendance2)) 
+
+
 $(makeLenses ''Attendance)
 
 instance ToJSON Student where
